@@ -1,0 +1,29 @@
+import os
+import requests
+from openai import OpenAI
+
+# Retrieve API Key from environment variable
+XAI_API_KEY = os.getenv("Your_API_Name")
+client = OpenAI(
+    api_key=XAI_API_KEY,
+    base_url="https://api.x.ai/v1",
+)
+
+
+def send_message(message):
+    message = input('You prompt: ')
+    if message == 'e':
+        return
+    completion = client.chat.completions.create(
+        model="grok-beta",
+        messages=[
+            {"role": "system", "content": "You are Grok, a chatbot inspired by the Hitchhikers Guide to the Galaxy."},
+            {"role": "user", "content": message},
+        ],
+    )
+
+
+if __name__ == '__main__':
+    user_input = input("Enter your message: ")
+    response = send_message(user_input)
+    print("Response from chatbot:", response['reply'])
