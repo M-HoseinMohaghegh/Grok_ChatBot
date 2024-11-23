@@ -1,0 +1,115 @@
+import os
+from openai import OpenAI
+import tkinter as tk
+from tkinter import messagebox
+
+# Retrieve the API key
+XAI_API_KEY = os.getenv("Your_API_Name")
+if not XAI_API_KEY:
+    raise ValueError("Environment variable 'GROK_API' is not set.")
+
+# Set the OpenAI API key
+client = OpenAI(
+    api_key=XAI_API_KEY,
+    base_url="https://api.x.ai/v1",
+)
+
+# Function to send the user's message and get AI response
+
+
+def send_message():
+    """Handles sending the user's message and receiving the AI response."""
+    user_message = user_input.get().strip()
+    if not user_message:
+        messagebox.showwarning(
+            "Input Error", "Please enter a message before sending.")
+        return
+
+    try:
+        # Enable editing of the text widget
+        response_text.config(state=tk.NORMAL)
+
+        # Display user's message in the text widget
+        response_text.insert(tk.END, f"You: {user_message}\n\n")
+
+        # Call the Grok AI API
+        completion = client.chat.completions.create(
+            model="grok-beta",
+            messages=[
+                {"role": "system", "content": "You are Grok, a chatbot inspired by the Hitchhikers Guide to the Galaxy."},
+                {"role": "user", "content": user_message},
+            ],
+        )
+        ai_response = completion.choices[0].message.content
+
+        # Display AI's response in the text widget
+        response_text.insert(tk.END, f"Grok: {ai_response}\n\n")
+        response_text.see(tk.END)  # Automatically scroll to the bottom
+
+        # Disable editing of the text widget
+        response_text.config(state=tk.DISABLED)
+
+        # Clear the input field
+        user_input.delete(0, tk.END)
+
+    except Exception as e:
+        # Display an error message
+        response_text.insert(tk.END, f"Error: {e}\n")
+        response_text.config(state=tk.DISABLED)
+        messagebox.showerror(
+            "Error", f"An error occurred while communicating with Grok AI: {e}")
+
+
+# Create the main Tkinter window
+root = tk.Tk()
+root.title("Grok AI Chatbot")
+root.geometry("500x400")
+root.resizable(False, False)
+
+# User input entry
+user_input = tk.Entry(root, font=("Arial", 12), width=50)
+user_input.pack(pady=10)
+
+# Send button
+send_button = tk.Button(root, text="Send", font=(
+    "Arial", 12), command=send_message)
+send_button.pack(pady=5)
+
+# Scrollable text area for response display
+response_frame = tk.Frame(root)
+response_frame.pack(padx=10, pady=10, fill=tk.BOTH, expand=True)
+
+# Text widget for chat display
+response_text = tk.Text(response_frame, wrap=tk.WORD,
+                        font=("Arial", 12), height=15)
+response_text.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+
+# Scrollbar for the text widget
+scrollbar = tk.Scrollbar(response_frame, command=response_text.yview)
+scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+response_text.config(yscrollcommand=scrollbar.set)
+
+# Make the response text area read-only initially
+response_text.config(state=tk.DISABLED)
+
+# Add exit functionality with a key binding
+
+
+def on_exit(event=None):
+    """Exit the application."""
+    root.destroy()
+# Function to handle Enter key press
+
+
+def on_enter_key(event=None):
+    """Trigger the send_message function when Enter key is pressed."""
+    send_message()
+
+
+# Bind the Enter key to the on_enter_key function
+root.bind('<Return>', on_enter_key)
+
+root.bind('<Escape>', on_exit)
+
+# Start the Tkinter event loop
+root.mainloop()
